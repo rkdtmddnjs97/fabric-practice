@@ -1,6 +1,6 @@
 import "./App.css";
 import { fabric } from "fabric";
-import { ChromePicker } from "react-color";
+import { SketchPicker } from "react-color";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import initCanvas from "./utils/initCanvas";
 
@@ -11,14 +11,50 @@ const App = () => {
   const [objName, setObjName] = useState([]);
   const [fillColor, setFillColor] = useState("");
   const [strokeColor, setStrokeColor] = useState("");
+  const [textBgColor, setTextBgColor] = useState("");
   const [objectId, setObjectId] = useState(0);
   const [selectedObj, setSelectedObj] = useState(null);
   const [stroke, setStroke] = useState(0);
+  const fontFamilyList = [
+    "serif",
+    // "Comic Sans",
+    // "Hoefler Text",
+    // "Delicious",
+    // "Impact",
+    "monoSpace",
+    "cursive",
+    // "fantasy",
+    "normal",
+    // "Pacifico",
+    // "VT323",
+    // "Quicksand",
+    // "Inconsolata",
+  ];
+  const fontStyleList = ["normal", "italic", "oblique"];
+  const [selectedText, setSelectedText] = useState({
+    text: "",
+    textBackgroundColor: "",
+    fontSize: 40,
+    fontStyle: "normal",
+    fontFamily: "serif",
+    fontWeight: "normal",
+    underline: false,
+    linethrough: null,
+    overline: false,
+    stroke: "",
+    strokeWith: null,
+    textAlign: "center",
+    lineHeight: null,
+  });
+  const [selectedShadow, setSelectedShadow] = useState({
+    blur: 0,
+    offsetX: 0,
+    offsetY: 0,
+  });
+
   useEffect(() => {
     canvas.current = initCanvas(canvasSize);
-    canvas.current.on("mouse:over", () => {
-      console.log("hello");
-    });
+    canvas.current.on("mouse:over", () => {});
     // canvas.current.on("object:scaling", (e) => {
     //   var obj = e.target;
     //   obj.strokeWidth
@@ -45,8 +81,6 @@ const App = () => {
       kindOf: "rect" + objectId,
     });
     rect.on("selected", (e) => {
-      console.log("제발", e.target);
-      console.log(e.target.fill, e.target.stroke, e.target.kindOf);
       setSelectedObj(e.target.kindOf);
       setFillColor(e.target.fill);
       setStrokeColor(e.target.stroke ? e.target.stroke : "#000000");
@@ -63,7 +97,15 @@ const App = () => {
       left: 0,
       stroke: "#123456",
       strokeWidth: 3,
+      kindOf: "rect" + objectId,
     });
+    circle.on("selected", (e) => {
+      setSelectedObj(e.target.kindOf);
+      setFillColor(e.target.fill);
+      setStrokeColor(e.target.stroke ? e.target.stroke : "#000000");
+      setStroke(e.target.strokeWidth);
+    });
+    setObjectId(objectId + 1);
     canvas.current.add(circle);
     canvas.current.renderAll();
   };
@@ -93,7 +135,6 @@ const App = () => {
 
   const handlefillColorChange = useCallback(
     (color) => {
-      console.log("getActiveObject", canvas.current.getActiveObject());
       if (canvas.current.getActiveObject()) {
         const activeObj = canvas.current.getActiveObject();
         activeObj.set("fill", color);
@@ -113,7 +154,6 @@ const App = () => {
       // }
       // console.log("objects", objects);
       if (canvas.current.getActiveObject()) {
-        console.log("getActiveObject", canvas.current.getActiveObject());
         const activeObj = canvas.current.getActiveObject();
         activeObj.set("stroke", color);
         canvas.current.renderAll();
@@ -125,7 +165,6 @@ const App = () => {
   const handleStrokeWidth = useCallback(
     (e) => {
       const activeObj = canvas.current.getActiveObject();
-      console.log("??", e.target.value, activeObj.setStrokeWidth);
       activeObj.set("strokeWidth", Number(e.target.value));
       canvas.current.renderAll();
       // activeObj.set("padding", 0);
@@ -133,7 +172,99 @@ const App = () => {
     },
     [stroke]
   );
+  const addText = () => {
+    // Textbox
+    let text = new fabric.IText("알았으면,고개 끄덕여", {
+      fontSize: 100,
+      fontStyle: "normal",
+      fontFamily: "Comic Sans",
+      fontWeight: 900,
+      underline: false,
+      linethrough: false,
+      overline: false,
+      stroke: "#ff1318",
+      strokeWith: 1,
+      textAlign: "right",
+      lineHeight: 20,
+      textBackgroundColor: "rgb(0, 200, 0)",
+      kindOf: "text" + objectId,
+    });
+    text.on("selected", (e) => {
+      setSelectedObj(e.target.kindOf);
+      setFillColor(e.target.fill);
+      setStrokeColor(e.target.stroke ? e.target.stroke : "#000000");
+      setStroke(e.target.strokeWidth);
+      setTextBgColor(e.target.textBackgroundColor);
+      setSelectedText({
+        fontSize: e.target.fontSize,
+        fontStyle: e.target.fontStyle,
+        fontWeight: e.target.fontWeight,
+        underline: e.target.underline,
+        linethrough: e.target.linethrough,
+        overline: e.target.overline,
+        stroke: e.target.stroke,
+        strokeWith: e.target.strokeWith,
+        textAlign: e.target.textAlign,
+        lineHeight: e.target.lineHeight,
+        text: e.target.text,
+      });
+    });
+    text.on("selected:cleared", (e) => {
+      setSelectedText({ ...selectedText, text: "" });
+    });
+    canvas.current.add(text);
+    canvas.current.renderAll();
+  };
+  const handleTextBgColorChange = useCallback(
+    (color) => {
+      if (canvas.current.getActiveObject()) {
+        const activeObj = canvas.current.getActiveObject();
+        activeObj.set("textBackgroundColor", color);
+        canvas.current.renderAll();
+        setTextBgColor(color);
+      }
+    },
+    [strokeColor]
+  );
+  const handleText = (e) => {
+    const { name, value } = e.target;
+    const activeObj = canvas.current.getActiveObject();
 
+    if (activeObj) {
+      activeObj.set(name, value);
+
+      canvas.current.renderAll();
+      setSelectedText({ ...selectedText, [name]: value });
+    }
+  };
+  const addShadow = () => {
+    const activeObj = canvas.current.getActiveObject();
+    if (activeObj) {
+      activeObj.set("shadow", {
+        blur: 15,
+        offsetX: 0,
+        offsetY: 0,
+        skewY: 20,
+        opacity: 10,
+      });
+      setSelectedShadow({ blur: 15, offsetX: 20, offsetY: 20, opacity: 10 });
+    }
+  };
+  const deleteShadow = () => {
+    const activeObj = canvas.current.getActiveObject();
+    if (activeObj) {
+      activeObj.set("shadow", null);
+    }
+  };
+  const handleShadow = (e) => {
+    const { name, value } = e.target;
+    const activeObj = canvas.current.getActiveObject();
+    if (activeObj) {
+      setSelectedShadow({ ...selectedShadow, [name]: value });
+      activeObj.set("shadow", { ...selectedShadow, [name]: value });
+      canvas.current.renderAll();
+    }
+  };
   return (
     <div className="App">
       <canvas id="canvas" />
@@ -145,14 +276,15 @@ const App = () => {
       <button onClick={increaseWidth}>캔버스 가로 늘이기</button>
       <button onClick={reduceHeight}>캔버스 세로 줄이기</button>
       <button onClick={increaseHeight}>캔버스 세로 늘이기</button>
+      <button onClick={addText}>텍스트 추가</button>
       <div style={{ display: "flex" }}>
-        <ChromePicker
+        <SketchPicker
           color={fillColor}
           onChange={(color) => handlefillColorChange(color.hex)}
         />
         <div>
           stroke 설정
-          <ChromePicker
+          <SketchPicker
             color={strokeColor}
             onChange={(color) => handleStrokeColorChange(color.hex)}
           />
@@ -163,6 +295,102 @@ const App = () => {
             max="50"
             value={stroke}
             onChange={handleStrokeWidth}
+          />
+        </div>
+        <div style={{ display: "flex" }}>
+          <p>글자 툴</p>
+          <div>
+            textBackgroundColor설정
+            <SketchPicker
+              color={textBgColor}
+              onChange={(color) => handleTextBgColorChange(color.hex)}
+            />
+            폰트:
+            <select
+              name="fontFamily"
+              onChange={handleText}
+              value={selectedText.fontFamily}
+            >
+              {fontFamilyList.map((item) => {
+                let selected = false;
+                if (item === selectedText.fontFamily) selected = true;
+                return (
+                  <option
+                    style={{ fontFamily: { item } }}
+                    checked={selected}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              name="fontStyle"
+              onChange={handleText}
+              value={selectedText.fontStyle}
+            >
+              {fontStyleList.map((item) => {
+                return (
+                  <option style={{ fontStyle: { item } }} value={item}>
+                    {item}
+                  </option>
+                );
+              })}
+            </select>
+            글자:
+            <input
+              value={selectedText.text}
+              name="text"
+              onChange={handleText}
+            />
+            <p>fontWeight : {selectedText.fontWeight}px</p>
+            <input
+              type="range"
+              min="100"
+              max="900"
+              name="fontWeight"
+              value={selectedText.fontWeight}
+              onChange={handleText}
+            />
+            <p>fontSize : {selectedText.fontSize}px</p>
+            <input
+              type="range"
+              min="10"
+              max="200"
+              name="fontSize"
+              value={selectedText.fontSize}
+              onChange={handleText}
+            />
+          </div>
+        </div>
+        <div style={{ display: "flex" }}>
+          <p>그림자</p>
+          <button onClick={addShadow}>추가하기</button>
+          <button onClick={deleteShadow}>제거하기</button>
+          <input
+            type="range"
+            min="10"
+            max="100"
+            name="blur"
+            value={selectedShadow.blur}
+            onChange={handleShadow}
+          />
+          <input
+            type="range"
+            min="-100"
+            max="100"
+            name="offsetX"
+            value={selectedShadow.offsetX}
+            onChange={handleShadow}
+          />
+          <input
+            type="range"
+            min="-100"
+            max="100"
+            name="offsetY"
+            value={selectedShadow.offsetY}
+            onChange={handleShadow}
           />
         </div>
       </div>
