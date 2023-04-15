@@ -51,10 +51,13 @@ const App = () => {
     offsetX: 0,
     offsetY: 0,
   });
-
+  const [selectedObjectIndex, setSelectedObjectIndex] = useState(null);
+  const [objects, setObjects] = useState([]);
   useEffect(() => {
     canvas.current = initCanvas(canvasSize);
     canvas.current.on("mouse:over", () => {});
+    canvas.current.on("object:selected", onObjectSelected);
+    canvas.current.on("selection:cleared", onSelectionCleared);
     // canvas.current.on("object:scaling", (e) => {
     //   var obj = e.target;
     //   obj.strokeWidth
@@ -63,12 +66,37 @@ const App = () => {
     //   activeObject.set("strokeWidth", obj.strokeWidth);
     //   canvas.current.renderAll();
     // }); 개쓸모없는코드
-
+    objects.forEach((object) => {
+      canvas.current.add(object);
+    });
     return () => {
       canvas.current.dispose();
       canvas.current = null;
     };
   }, []);
+
+  const onObjectSelected = (event) => {
+    setSelectedObjectIndex(
+      event.selected[0].canvas.getObjects().indexOf(event.selected[0])
+    );
+  };
+
+  const onSelectionCleared = () => {
+    setSelectedObjectIndex(null);
+  };
+  const handleObjectSelect = (index) => {
+    if (index === selectedObjectIndex) {
+      return;
+    }
+    const canva = canvas.current;
+    const objectList = canva.getObjects();
+    if (index < objectList.length) {
+      console.log("object", objectList);
+      canva.setActiveObject(canva.item(index));
+      setSelectedObjectIndex(index);
+      canva.renderAll();
+    }
+  };
 
   const addRect = () => {
     let rect = new fabric.Rect({
@@ -87,6 +115,7 @@ const App = () => {
       setStroke(e.target.strokeWidth);
     });
     setObjectId(objectId + 1);
+    setObjects([...objects, rect]);
     canvas.current.add(rect);
     canvas.current.renderAll();
   };
@@ -106,6 +135,7 @@ const App = () => {
       setStroke(e.target.strokeWidth);
     });
     setObjectId(objectId + 1);
+    setObjects([...objects, circle]);
     canvas.current.add(circle);
     canvas.current.renderAll();
   };
@@ -174,14 +204,14 @@ const App = () => {
   );
   const addText = () => {
     // Textbox
-    let text = new fabric.IText("알았으면,고개 끄덕여", {
+    let text = new fabric.IText("Text", {
       fontSize: 100,
       fontStyle: "normal",
       fontFamily: "Comic Sans",
       fontWeight: 900,
-      underline: false,
-      linethrough: false,
-      overline: false,
+      underline: true,
+      linethrough: true,
+      overline: true,
       stroke: "#ff1318",
       strokeWith: 1,
       textAlign: "right",
@@ -212,6 +242,7 @@ const App = () => {
     text.on("selected:cleared", (e) => {
       setSelectedText({ ...selectedText, text: "" });
     });
+    setObjects([...objects, text]);
     canvas.current.add(text);
     canvas.current.renderAll();
   };
@@ -267,6 +298,21 @@ const App = () => {
   };
   return (
     <div className="App">
+      <div>
+        <ul>
+          {objects.map((object, index) => (
+            <li
+              key={index}
+              onClick={() => handleObjectSelect(index)}
+              style={{
+                fontWeight: index === selectedObjectIndex ? "bold" : "normal",
+              }}
+            >
+              {`Object ${index + 1}`}
+            </li>
+          ))}
+        </ul>
+      </div>
       <canvas id="canvas" />
       <button onClick={addRect}>Add Rect</button>
       <button onClick={viewCanvas}>canvas data</button>
