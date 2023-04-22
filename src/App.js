@@ -56,7 +56,7 @@ const App = () => {
   useEffect(() => {
     canvas.current = initCanvas(canvasSize);
     canvas.current.on("mouse:over", () => {});
-    canvas.current.on("object:selected", onObjectSelected);
+    canvas.current.on("selection", onObjectSelected);
     canvas.current.on("selection:cleared", onSelectionCleared);
     // canvas.current.on("object:scaling", (e) => {
     //   var obj = e.target;
@@ -275,16 +275,20 @@ const App = () => {
         blur: 15,
         offsetX: 0,
         offsetY: 0,
-        skewY: 20,
+        skewY: 100,
+        skewX: 100,
+        skew: 100,
         opacity: 10,
       });
       setSelectedShadow({ blur: 15, offsetX: 20, offsetY: 20, opacity: 10 });
+      canvas.current.renderAll();
     }
   };
   const deleteShadow = () => {
     const activeObj = canvas.current.getActiveObject();
     if (activeObj) {
       activeObj.set("shadow", null);
+      canvas.current.renderAll();
     }
   };
   const handleShadow = (e) => {
