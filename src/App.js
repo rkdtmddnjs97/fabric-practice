@@ -2,6 +2,8 @@ import "./App.css";
 import { fabric } from "fabric";
 import { SketchPicker } from "react-color";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import addCircle from "./utils/addCircle";
+import addRect from "./utils/addRect";
 import initCanvas from "./utils/initCanvas";
 
 const App = () => {
@@ -15,21 +17,7 @@ const App = () => {
   const [objectId, setObjectId] = useState(0);
   const [selectedObj, setSelectedObj] = useState(null);
   const [stroke, setStroke] = useState(0);
-  const fontFamilyList = [
-    "serif",
-    // "Comic Sans",
-    // "Hoefler Text",
-    // "Delicious",
-    // "Impact",
-    "monoSpace",
-    "cursive",
-    // "fantasy",
-    "normal",
-    // "Pacifico",
-    // "VT323",
-    // "Quicksand",
-    // "Inconsolata",
-  ];
+  const fontFamilyList = ["serif", "monoSpace", "cursive", "normal"];
   const fontStyleList = ["normal", "italic", "oblique"];
   const [selectedText, setSelectedText] = useState({
     text: "",
@@ -58,14 +46,6 @@ const App = () => {
     canvas.current.on("mouse:over", () => {});
     canvas.current.on("selection", onObjectSelected);
     canvas.current.on("selection:cleared", onSelectionCleared);
-    // canvas.current.on("object:scaling", (e) => {
-    //   var obj = e.target;
-    //   obj.strokeWidth
-    //   obj.strokeWidth = obj.strokeWidth / ((obj.scaleX + obj.scaleY) / 2);
-    //   var activeObject = canvas.current.getActiveObject();
-    //   activeObject.set("strokeWidth", obj.strokeWidth);
-    //   canvas.current.renderAll();
-    // }); 개쓸모없는코드
     objects.forEach((object) => {
       canvas.current.add(object);
     });
@@ -119,26 +99,7 @@ const App = () => {
     canvas.current.add(rect);
     canvas.current.renderAll();
   };
-  const addCircle = () => {
-    let circle = new fabric.Circle({
-      radius: 65,
-      fill: "#039BE5",
-      left: 0,
-      stroke: "#123456",
-      strokeWidth: 3,
-      kindOf: "rect" + objectId,
-    });
-    circle.on("selected", (e) => {
-      setSelectedObj(e.target.kindOf);
-      setFillColor(e.target.fill);
-      setStrokeColor(e.target.stroke ? e.target.stroke : "#000000");
-      setStroke(e.target.strokeWidth);
-    });
-    setObjectId(objectId + 1);
-    setObjects([...objects, circle]);
-    canvas.current.add(circle);
-    canvas.current.renderAll();
-  };
+
   const viewCanvas = () => {
     console.log("??", JSON.stringify(canvas.current.toDatalessJSON(["id"])));
   };
@@ -320,7 +281,34 @@ const App = () => {
       <canvas id="canvas" />
       <button onClick={addRect}>Add Rect</button>
       <button onClick={viewCanvas}>canvas data</button>
-      <button onClick={addCircle}>Add Circle</button>
+      <button
+        onClick={() =>
+          addCircle(
+            {
+              radius: 65,
+              fill: "#039BE5",
+              left: 0,
+              stroke: "#123456",
+              strokeWidth: 3,
+              kindOf: "rect" + objectId,
+            },
+            (e) => {
+              setSelectedObj(e.target.kindOf);
+              setFillColor(e.target.fill);
+              setStrokeColor(e.target.stroke ? e.target.stroke : "#000000");
+              setStroke(e.target.strokeWidth);
+            },
+            (circle) => {
+              setObjectId(objectId + 1);
+              setObjects([...objects, circle]);
+              canvas.current.add(circle);
+              canvas.current.renderAll();
+            }
+          )
+        }
+      >
+        Add Circle
+      </button>
       <button onClick={addRect}>Add Rect</button>
       <button onClick={reduceWidth}>캔버스 가로 줄이기</button>
       <button onClick={increaseWidth}>캔버스 가로 늘이기</button>
